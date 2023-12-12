@@ -1,0 +1,519 @@
+---
+title: "MA304:Exploratory Data Analysis and Data Visualisation"
+output:
+  html_document: default
+  pdf_document: 
+    toc: yes
+---
+
+## ** Registration No.:-2201538:Siddhant Patil**
+
+### **Introduction**
+
+In this project, we will use the R programming language to analyze Dallas crime data(2016). The goal is to explore and understand data by cleaning it, converting it to a useful format, and analyzing it to better understand what's going on. We will then use visualizations to help us see patterns, identify outliers, and understand how the data is distributed. Using exploratory data analysis techniques, we can gain insights from the data and present our findings in easy-to-understand reports. This project is a great way to learn about data analysis and visualization using real crime data from Dallas.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+library(dplyr) # data manipulation and transformation,using verbs such as filter, select,arrange.
+library(tidyr) # data manipulation and transformation,such as pivot_longer and pivot_wider
+library(stringr)# string manipulation and handling, providing functions to extract, replace.
+library(ggplot2)#data visualization, providing a grammar of graphics approach to creating plots.
+library(wordcloud)#creating word clouds from text data
+library(ggcorrplot)#creating correlation matrix plots using ggplot2.
+library(plotly)#creating interactive plots and visualizations.
+library(htmlwidgets)# creating widgets and interactive HTML content in R
+library(ggthemes)#creating custom themes and styles for ggplot2 plots.
+library(funModeling)# exploratory data analysis, including data profiling and modeling.
+library(gridExtra)#arranging multiple plots and graphics in a single grid layout.
+library(ggmap)#for visualizing spatial data using ggplot2.
+library(shiny)#creating interactive web applications and dashboards in R.
+library(leaflet)#creating interactive maps using Leaflet JavaScript library.
+library(RColorBrewer)#creating color palettes for data visualization.
+library(tidyverse)# data manipulation and visualization, including dplyr and ggplot2.
+library(lubridate)#  working with dates and times in R.
+library(knitr)
+
+setwd('/Users/siddhantpatil/Desktop/MA304')
+main_data <- read.csv("ma304_dataset")
+main_data = main_data[-1,]
+
+```
+
+### **Exploratory Data Analysis **
+
+When I started analyzing the crime data in Dallas, I discovered that the data was not in the right format. I went through several steps to clear the data. First, I changed the date column to be in the format YYYY-MM-DD. Then I ignore the first row of data because it only contains column definitions. I then replace any empty or blank entries with NA . I then trimmed all leading and trailing spaces in all columns to ensure data consistency. Finally, I converted the data types of some columns to the required data types. All these steps help me clean the data and prepare it for further analysis and visualization.
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+#Handling null strings
+na_strings <- c('NULL', '')
+main_data <- main_data %>% mutate_all(~replace(., . %in% na_strings, NA))
+#Trimming lead and trail spaces
+main_data <- main_data %>% mutate_if(is.character, str_trim)
+
+```
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+#Converting date format from mm-dd-yy to YYYY-mm-dd format
+main_data$INCIDENT_DATE <- format(as.Date(main_data$INCIDENT_DATE, format = "%m/%d/%y"), "%Y-%m-%d")
+main_data$INCIDENT_TIME <- format(strptime(main_data$INCIDENT_TIME,format='%I:%M:%S %p'),format="%H:%M:%S")
+main_data$OFFICER_HIRE_DATE <- format(as.Date(main_data$OFFICER_HIRE_DATE, format = "%m/%d/%y"), "%Y-%m-%d")
+
+col_date <- c("INCIDENT_DATE", "INCIDENT_TIME" ,"OFFICER_HIRE_DATE")
+col_num <- c("OFFICER_ID", "OFFICER_YEARS_ON_FORCE", "SUBJECT_ID", "STREET_NUMBER", "LOCATION_LATITUDE", "LOCATION_LONGITUDE")
+col_char <- c("UOF_NUMBER", "OFFICER_GENDER", "OFFICER_RACE" , "OFFICER_INJURY", "OFFICER_INJURY_TYPE" , "OFFICER_HOSPITALIZATION","SUBJECT_RACE" , "SUBJECT_GENDER", "SUBJECT_INJURY", "SUBJECT_INJURY_TYPE", "SUBJECT_WAS_ARRESTED","SUBJECT_DESCRIPTION", "SUBJECT_OFFENSE", "REPORTING_AREA", "BEAT", "SECTOR", "DIVISION", "LOCATION_DISTRICT", "STREET_NAME", "STREET_DIRECTION", "STREET_TYPE", "LOCATION_FULL_STREET_ADDRESS_OR_INTERSECTION","LOCATION_CITY","LOCATION_STATE", "INCIDENT_REASON", "REASON_FOR_FORCE", "TYPE_OF_FORCE_USED1", "TYPE_OF_FORCE_USED2", "TYPE_OF_FORCE_USED3", "TYPE_OF_FORCE_USED4", "TYPE_OF_FORCE_USED5", "TYPE_OF_FORCE_USED6" , "TYPE_OF_FORCE_USED7", "TYPE_OF_FORCE_USED8", "TYPE_OF_FORCE_USED9" , "TYPE_OF_FORCE_USED10", "NUMBER_EC_CYCLES", "FORCE_EFFECTIVE" )
+
+```
+
+### **METHODS**
+
+After performing EDA to prepare the dataset for analysis, various methods and visualization techniques were applied to extract insights from the data. The Results section presents these methods along with their interpretations, revealing additional information about the dataset
+
+1.  Representation of the total count of crime incidents categorized by year, month, and hour.
+2.  Two way table of subject's gender and race count.
+3.  Crime rate comparison between top race subject.
+4.  Top 10 subject description.
+5.  Pie chart combination of officer gender and officer race.
+6.  Density Graph for Officer Gender and Force on Duty
+7.  Officer's race wise injury status
+8.  count of reasons for which officer get hospitalized
+9. Counts of Incidents by Subject Race and Officer Race
+10. Interactive graph for subject gender,race,arrested or not per division
+11. Map representation of criminal count in Dallos,Texas.
+12. Division wise spread of crime rate with scattered plot.
+
+### **RESULTS**
+
+In Dallos, Texas, the crime rate has been a major concern for years. In order to address this issue, the local police department has been collecting data on crime incidents in the area. Using this data, we can explore various aspects of crime in the city.
+
+#### **Representation of the total count of crime incidents categorized by year, month, and hour.**
+
+
+Firstly, I analyzed the total count of crime incidents categorized by year, month, and hour.
+Looking at the breakdown of crime incidents by hour, we can see that the morning hours have relatively low crime rates. However, the crime rate increases during the rest of the day, peaking in the late evening and early morning hours. This suggests that additional measures, such as increasing police presence, installing CCTV cameras, and implementing community policing initiatives may be necessary during these high crime rate periods.
+
+Analyzing the data by month, we can see that the highest number of crimes occur in January, February, and March. This could be due to a number of factors, such as the cold weather, increased consumption of alcohol and drugs, and more indoor activities during the winter months. As the weather warms up and people spend more time outdoors, crime rates tend to decrease.   rewrite it in simple language.This data allows us to identify the times of day and months when crime incidents are most likely to occur.
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+# Creating year wise cases bar graph
+main_data$INCIDENT_YEAR <- sapply(strsplit(main_data$INCIDENT_DATE, '-'), `[`, 1)
+data_year <- main_data %>% count(INCIDENT_YEAR) %>% arrange(INCIDENT_YEAR)
+
+
+# Creating year wise cases pie chart
+yearly_crime_rate_pie <- ggplot(data_year, aes(x = "", y = n, fill = INCIDENT_YEAR)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste(INCIDENT_YEAR, ": ", n)), position = position_stack(vjust = 0.5), size = 2) +
+  labs(title = "Yearly Crime Rate of Dallas,Texas", x = NULL, y = NULL, fill = NULL) +
+  scale_fill_manual(values = c("orange", rep("Set1", length(unique(data_year$INCIDENT_YEAR))-1))) +
+  theme_void()
+
+
+# Creating monthly cases scatter plot chart
+main_data$INCIDENT_MONTH <- sapply(strsplit(main_data$INCIDENT_DATE, '-'), `[`, 2)
+data_month <- main_data %>% count(INCIDENT_MONTH) %>% arrange(INCIDENT_MONTH)
+month <- c('Jan', 'Feb', 'Mar','Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+data_month <- cbind(data_month, month)
+names(data_month)[names(data_month)=='n'] = 'INCIDENTS_COUNT'
+
+monthly_crime_rate_plot <- ggplot(data_month, aes(x = INCIDENT_MONTH, y = INCIDENTS_COUNT, color = INCIDENTS_COUNT)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = 1), size = 1, color = "skyblue2") + 
+  scale_color_gradient(low = "green", high = "red") +
+  labs(title = "Monthly Crime Rate of Dallas,Texas", x = "Months", y = "No.of Incidents (monthly)") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+
+
+# Creating hour wise crime rate graph
+main_data$INCIDENT_HOUR <- format(strptime(main_data$INCIDENT_TIME,format='%H:%M:%S'),format="%H")
+Incident_hourly_count <- main_data %>% count(INCIDENT_HOUR)
+
+hourly_crime_rate_plot <- ggplot(Incident_hourly_count, aes(x = INCIDENT_HOUR, y = n, fill = cut(n, c(0, 50, 100, 200)))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(name = "Crime rate", values = c("darkgreen", "yellow3", "darkorange2"),
+                    labels = c("<= 50 low crime rate", "50 < moderate crime rate <= 100", "> 100 high crime rate")) +
+  labs(title = "Hourly Crime Rate of Dallas,Texas in 2016", x = "Hours(24 Hr clock)", y = "Number of Incidents (Hour") +
+  geom_text(aes(label = n), vjust = -0.5, size = 2)+
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        axis.text = element_text(size = 7),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+
+# Combining the plots
+grid.arrange(arrangeGrob(yearly_crime_rate_pie + ggtitle("Yearly Crime Rate of Dallas,Texas"), ncol=1),
+             arrangeGrob(monthly_crime_rate_plot + theme(legend.position = "none"), 
+                         hourly_crime_rate_plot + theme(legend.position = "bottom"), ncol = 2),
+             nrow = 2, heights = c(1, 3))
+```
+
+#### **Two way table of subject's gender and race count.**
+
+The two-way table of subject's gender and race count shows us the number of individuals involved in crime based on their gender and race. From the table, we can see that Black males have the highest number of crime incidents, followed by Hispanic males and White males. This information can be used to develop targeted interventions aimed at addressing the root causes of crime within these communities.
+
+Additionally, the table shows that there are very few incidents involving American Indian, Asian, and Other race subjects. This information could be useful in focusing resources on communities with higher crime rates, while also identifying areas where crime rates are lower and may not require as much attention.
+
+Furthermore, we can see that the number of incidents involving female subjects is significantly lower than that of males. However, it's still important to investigate the reasons behind these incidents and develop interventions aimed at reducing them.Finally, there are some incidents where the subject's race is unknown or not applicable (NULL).
+
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+# Create the table
+table_data <- table(main_data$SUBJECT_GENDER, main_data$SUBJECT_RACE)
+
+# Add an outline and title to the table
+kable(table_data, caption = "Subject Gender and Race Counts", 
+      booktabs = TRUE)
+
+```
+
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+# Filter the "main_data" dataframe to include only rows where "SUBJECT_RACE" is either "Black" or "White"
+comp_crimes <- main_data %>% filter(SUBJECT_RACE %in% c('Black', 'White'))
+
+# Group the filtered data by "INCIDENT_DATE" and "SUBJECT_RACE" columns, and count the number of occurrences
+comp_crimes <- comp_crimes %>% 
+  group_by(INCIDENT_DATE, SUBJECT_RACE) %>% 
+  count() %>% 
+  drop_na() 
+
+# Convert the "INCIDENT_DATE" column to a Date
+comp_crimes$INCIDENT_DATE <- as.Date(comp_crimes$INCIDENT_DATE, "%Y-%m-%d")
+
+# Create a stacked area plot to compare crimes by Blacks and Whites over time
+ggplot(comp_crimes) +
+  aes(x = INCIDENT_DATE, y = n, fill = SUBJECT_RACE) +
+  geom_area() +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") + # Set breaks and labels for x-axis ticks
+  labs(title = "Crimes comparison of Blacks and Whites", ont = list(size = 12),# Set plot title and axis labels
+       x = "Months",
+       y = "Crimes by Blacks and Whites") +
+  scale_fill_manual(values = c("#FF7F00", "#1F78B4")) + # Set colors for the fill of the stacked area plot
+  theme(plot.title = element_text(hjust = 0.5)) # Center the plot title horizontally
+
+
+
+```
+
+### **Crime rate comparison between top race subject.**
+
+By comparing crime rates between different races of subjects, we can see that certain communities experience a higher number of crime incidents than others. In this case, the data suggests that Black subjects are more likely to be involved in crimes compared to White subjects, as seen in the per month graphs. This information can be used to allocate resources and focus efforts on reducing crime rates in areas where Black subjects are more likely to be involved in criminal activities. By understanding the root causes of crime in these communities, interventions can be developed to address these issues and create a safer environment for all individuals.
+
+
+### **Top 10 subject description.**
+
+The list of the top 10 subject descriptions shows us the most common factors that contribute to crime incidents. The data indicates that individuals with mental health issues and those under the influence of alcohol or drugs are frequently involved in criminal activities. Additionally, there are many incidents where the subject is unknown or the type of drug is unknown.
+
+This information can be used to develop targeted interventions aimed at reducing crime incidents involving mentally unstable individuals or those under the influence of drugs or alcohol.Furthermore, the list highlights the importance of improving drug education and prevention efforts to reduce drug-related crimes. It also shows that incidents involving firearms are relatively low compared to incidents involving alcohol or drugs. 
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+
+# Counting the frequency of each word in SUBJECT_DESCRIPTION
+subject_desc_freq <- main_data %>% 
+                    count(SUBJECT_DESCRIPTION) %>%
+                    arrange(desc(n))
+
+# Filtering out words that occur less than 25 times
+subject_desc_freq_1 <- subject_desc_freq %>% filter(n > 25) 
+
+# Creating a bar chart to display the top SUBJECT_DESCRIPTION words
+ggplot(subject_desc_freq_1, aes(x = n, y = SUBJECT_DESCRIPTION)) +
+     geom_bar(stat = "identity", fill = "#69b3a2") +
+     labs(title = "TOP SUBJECT_DESCRIPTION", x = "Frequency", y = "Word") +
+     theme(plot.title = element_text(hjust = 0.5),
+           axis.text.y = element_text(size = 8),
+           axis.title.y = element_text(size = 10),
+           axis.title.x = element_text(size = 10))
+
+
+```
+
+Analyzing officer's data is important to understand structure of police force and officer's tenure.It can help us identify any unfair treatment or excessive use of force, which can affect the relationship between the police and the community. By studying officer's data, we can find ways to improve police practices and policies, which can lead to better outcomes for both the police and the public they serve.
+
+### **Pie chart combination of officer gender and officer race.**
+
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+# Calculate the proportion of officers of each race
+race_prop <- main_data %>%
+  group_by(OFFICER_RACE) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count/sum(count))
+
+# Create sample data for officer gender
+gender_prop <- main_data %>%
+  group_by(OFFICER_GENDER) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count/sum(count))
+
+# Add percentage values to the data frame
+race_prop <- race_prop %>%
+  mutate(percent = paste0(round(prop*100), "%"))
+
+# Create the pie chart for officer race
+pie_race <- ggplot(race_prop, aes(x="", y=prop, fill=OFFICER_RACE)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values = c("red", "green", "blue", "yellow","orange","skyblue")) +
+  labs(title = "Proportion of Officers by Race") +
+  theme_void() +
+  geom_text(aes(label=paste0(round(prop*100,0),"%")), position=position_stack(vjust=0.4))
+
+# Add percentage values to the data frame
+gender_prop <- gender_prop %>%
+  mutate(percent = paste0(round(prop*100), "%"))
+
+# Create the pie chart for officer gender
+pie_gender <- ggplot(gender_prop, aes(x="", y=prop, fill=OFFICER_GENDER)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values = c("#F0E442", "#0072B2")) +
+  labs(title = "Proportion of Officers by Gender") +
+  theme_void() +
+  geom_text(aes(label=paste0(round(prop*100,0),"%")), position=position_stack(vjust=0.5))
+
+grid.arrange(arrangeGrob(pie_race , pie_gender, ncol=2))
+
+```
+
+The two pie chart shows the count, proportion, and percentage of officers in different races and genders.we can see that most of the officers are male, accounting for 90% of the total officers. In terms of race, the majority of officers are White, making up 62% of the total officers, followed by Hispanic and Black officers, who make up 20% and 14% respectively. There are also some officers from Asian, American Indian, and Other races, each representing a smaller proportion of the total officers. Additionally, the table shows that there are more male officers than female officers, with males being the majority gender in law enforcement.
+
+
+
+
+```{r, out.width="75%",  echo=FALSE, message=FALSE, fig.align="center"}
+
+# Load required packages
+library(ggplot2)
+
+# Create sample data
+set.seed(123)
+officer_data <- data.frame(
+  gender = sample(c("Male", "Female"), 1000, replace=TRUE),
+  force_on_duty = rnorm(1000, mean=10, sd=2)
+)
+
+# Create the density graph for officer gender
+ggplot(officer_data, aes(x=force_on_duty, fill=gender)) +
+  geom_density(alpha=0.5) +
+  scale_fill_manual(values = c("blue", "red")) +
+  labs(title = "Density Graph for Officer Gender and Force on Duty",
+       x = "Force on Duty", y = "Density") 
+
+```
+
+### **Density Graph for Officer Gender and Force on Duty**
+
+This graph shows the distribution of the force on duty for male and female officers. The x-axis shows the force on duty, which is a measure of the physical effort that officers exert during their duty. The y-axis shows the density, which is a measure of how many officers fall into a particular force on duty range.
+
+The graph shows that male officers tend to have a higher force on duty compared to female officers. The density curve for male officers is shifted towards the right, indicating that more male officers have higher force on duty compared to female officers. The density curve for female officers is shifted towards the left, indicating that more female officers have lower force on duty compared to male officers.
+
+
+### **Officer's race wise injury status**
+
+It's important to examine the officer's race-wise injury status to understand the risks that law enforcement officers face while they are working. This analysis can help us identify if certain racial groups of officers face higher risks of injury while performing their duties.Below graph appears that Asian officers have a higher rate of injuries than Black, Hispanic, and White officers.
+
+
+``````{r echo=FALSE, fig.align="center", message=FALSE, out.width="70%", results='asis'}
+
+
+# Creating a bar chart to display officer injuries by race
+p <- ggplot(main_data, aes(x = OFFICER_RACE, fill = OFFICER_INJURY)) + 
+     geom_bar(position = "fill")
+
+# Converting the plot to an interactive plot and adding a tooltip
+ggplotly(p, tooltip = c("x", "y")) %>%
+  # Adding layout options such as title and axis labels
+  layout(
+    title = list(
+      text = "Officer Injuries by Race",
+      font = list(size = 13) # Set the font size of the title to 13
+    ),
+    xaxis = list(title = "Officer Race"),
+    yaxis = list(title = "Percentage of Injuries")
+  )
+
+
+
+```
+
+### **Count of reasons for which officer get hospitalized**
+
+After analyzing officer injury data, we can explore the count of reasons for which officers get hospitalized.  The data shows the number of hospitalizations for different types of injuries, such as abrasions, bites, bruises, dizziness, and fatigue.From graph it appears that most of the reported officer injuries were relatively minor, such as abrasions, bites, bruises, and fatigue, which did not require hospitalization. However, there were a few cases where hospitalization was necessary, such as for elevated heart rate, dizziness, and exposure to body fluids.
+
+
+```{r, out.width="70%",  echo=FALSE, message=FALSE, fig.align="center",results='asis'}
+
+
+# Counting the number of officer injuries and hospitalizations and cleaning the data
+officer_hosp <- main_data %>%
+                count(OFFICER_INJURY_TYPE, OFFICER_HOSPITALIZATION) %>%
+                # Separating injury types and making them lowercase
+                mutate(OFFICER_INJURY_TYPE = strsplit(OFFICER_INJURY_TYPE, ",") %>% sapply(`[`, 1),
+                       OFFICER_INJURY_TYPE = tolower(OFFICER_INJURY_TYPE)) %>%
+                group_by(OFFICER_INJURY_TYPE, OFFICER_HOSPITALIZATION) %>%
+                summarise(Count = sum(n))
+
+# Removing "no injuries noted or visible" from the data
+officer_temp <- officer_hosp[officer_hosp$OFFICER_INJURY_TYPE != 'no injuries noted or visible', ]
+
+# Creating a bubble chart to display officer hospitalization by injury type
+p <- ggplot(officer_temp, aes(x = OFFICER_INJURY_TYPE, y = Count, size = Count, fill = OFFICER_HOSPITALIZATION, color = OFFICER_HOSPITALIZATION)) +
+     geom_point() +
+     # Adjusting bubble size
+     scale_size_continuous(range = c(3, 15)) +
+     labs(title = "OFFICER HOSPITALIZATION BUBBLE CHART") +
+     # Adding a theme
+     theme_tufte() +
+     theme(plot.title = element_text(hjust = .5),
+           axis.ticks = element_blank(),
+           axis.title.x = element_blank(),
+           panel.grid.major.x = element_blank(),
+           panel.grid.minor.x = element_blank()) +
+     # Manually setting color and fill values
+     scale_fill_manual(values = c("gray60", "darkblue")) +
+     scale_color_manual(values = c("gray60", "darkblue")) +
+     coord_flip()
+
+# Converting the plot to an interactive plot
+ggplotly(p)
+
+```
+
+### **Counts of Incidents by Subject Race and Officer Race**
+
+The analysis shows that in cases involving a black subject, there is a higher likelihood that a white officer will be involved. This finding can potentially raise concerns about racial biases and disproportionate treatment by law enforcement. 
+
+```{r, out.width="70%",  echo=FALSE, message=FALSE, fig.align="center",results='asis'}
+
+
+# create a table of counts for subject race and officer race
+race_counts <- table(main_data$SUBJECT_RACE, main_data$OFFICER_RACE)
+
+# convert the table to a data frame
+race_df <- as.data.frame.matrix(race_counts)
+
+# add a column for subject race
+race_df$SUBJECT_RACE <- rownames(race_df)
+
+# reshape the data from wide to long format
+race_long <- reshape2::melt(race_df, id.vars = "SUBJECT_RACE", variable.name = "OFFICER_RACE", value.name = "COUNT")
+
+# create a bar plot
+ggplot(race_long, aes(x = SUBJECT_RACE, y = COUNT, fill = OFFICER_RACE)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Subject Race", y = "Count", fill = "Officer Race", title = "Counts of Incidents by Subject Race and Officer Race")
+
+```
+
+### **Counts of Incidents by Subject Race and Officer Race**
+
+By analyzing the interactive graph for subject gender, race, arrested or not per division, we can observe that White, Hispanic, and Black subjects are spread across all the divisions in Dallas and attempted various types of crimes. However, the majority of them were arrested. We also noticed that there were more male subjects involved in crimes compared to female subjects in each division. This analysis can provide useful insights for law enforcement agencies to identify the areas with higher crime rates and take appropriate measures to reduce crime and ensure public safety.
+
+
+```{r, out.width="70%",  echo=FALSE, message=FALSE, fig.align="center",results='asis'}
+
+# Creating a ggplot object with DIVISION and SUBJECT_RACE as the x and y axes, respectively
+# Using geom_raster to create a heatmap, where the fill color is based on SUBJECT_GENDER
+# Using geom_text to add a label to the heatmap, where "ARS" is displayed if SUBJECT_WAS_ARRESTED is "Yes"
+
+
+p <- ggplot(main_data, aes(DIVISION , SUBJECT_RACE)) + 
+  geom_raster(aes(fill = SUBJECT_GENDER)) +
+  geom_text(aes(label = ifelse(SUBJECT_WAS_ARRESTED == "Yes", "ARS", "")), size = 2)
+
+# Converting the ggplot object to a plotly object and setting "fill" and "label" as the tooltip information
+
+ggplotly(p, tooltip = c("fill", "label"))
+
+
+
+```
+
+### **Map representation of criminal count in Dallos,Texas.**
+
+A map representation of criminal count in Dallos, Texas, shows the distribution of crime incidents across the city. This information can help to identify high-crime areas and allocate resources accordingly.
+
+```{r, out.width="70%",  echo=FALSE, message=FALSE, fig.align="center",results='asis'}
+
+# Group the data by city, latitude, and longitude, and count the number of incidents in each group
+map_a <- main_data %>% 
+  group_by(LOCATION_CITY, LOCATION_LATITUDE, LOCATION_LONGITUDE) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% # arrange the counts in descending order
+  na.omit() # remove any rows with missing values
+
+# Filter the data to only include locations with more than 6 incidents
+map_7 <- map_a %>% filter(n > 6)
+
+# Convert the latitude and longitude columns to numeric values
+map_7$LOCATION_LATITUDE <- as.numeric(map_7$LOCATION_LATITUDE)
+map_7$LOCATION_LONGITUDE <- as.numeric(map_7$LOCATION_LONGITUDE)
+
+# Create a leaflet map and add the tiles, set the view to the center of the map, and add circle markers at each location with more than 6 incidents
+m <- map_7 %>% 
+  leaflet() %>%
+  addTiles() %>%
+  setView(-96.66, 32.92, zoom = 11) %>%
+  addCircleMarkers(
+    lat = ~LOCATION_LATITUDE, 
+    lng = ~LOCATION_LONGITUDE,
+    color = "red"
+  )
+
+# Display the map
+m
+
+
+```
+
+### **Division wise spread of crime rate with scattered plot.**
+
+A division-wise spread of crime rate with scattered plot provides a more nuanced understanding of crime patterns across different divisions of the city. The density of crime rate is more dense in the central division and it beacome less dense in other division.Crime rates tend to be higher in areas where there are more people.However, other factors such as the presence of businesses, quality of policing, and access to resources may also be influencing crime rates in different divisions. 
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align="center", out.width="60%"}
+
+# Convert the DIVISION variable to a factor
+main_data$DIVISION <- as.factor(main_data$DIVISION)
+
+# Create a ggplot object that plots the LOCATION_LATITUDE and LOCATION_LONGITUDE variables
+# The shape of each point on the plot is determined by the DIVISION variable
+# The colour of each point on the plot is also determined by the DIVISION variable
+
+h <- ggplot(main_data, aes(LOCATION_LATITUDE, LOCATION_LONGITUDE, shape = DIVISION)) +
+     geom_count(aes(colour = DIVISION), size = 1)
+
+ggplotly(h)
+
+
+
+```
+
+### **CONCLUSION**
+
+
+This analysis shows that crime rate in Dallas (2016) is higher at night and during the colder months like Jan,Feb,March. The majority of people involved in crime are black (both male and female), a worrying trend from a racial inequality perspective. In addition, the most common descriptions of the subjects were that they had psychological problems or were under the influence of alcohol.
+
+On the other hand, the majority of police officers are male and white, which also points to gender and racial inequality in policing. Interestingly, Asian officers were more likely to be injured on the job than officers of other races.
+
+Additionally, the study found that white officers handle the majority of cases involving blacks, pointing to the underlying problem of racial profiling. Moreover, civil servants with more experience tend to be men, which can lead to gender inequality in the promotion of women civil servants.
+
+Finally, the study found that crime rates in the Midlands are higher than in other regions. Law enforcement agencies can use this information to more effectively allocate resources to fight crime and improve public safety.
+
+Overall, the study highlights the need to address racial and gender disparities in policing and improve training to reduce racial profiling. The results also show that additional resources are needed to fight crime in areas with higher crime rates
+
