@@ -4,7 +4,7 @@ This project aims to conduct text and sentiment analysis on the renowned play "K
 
 Objective
 
-The primary goal of this project is to delve into the text of "King Lear" and apply sentiment analysis techniques to decipher the emotions conveyed through the dialogues of various characters. By employing natural language processing (NLP) methodologies, this analysis seeks to uncover patterns, sentiments, and thematic insights present in the play.
+The primary goal of this project is to delve into the text of "King Lear" and apply sentiment analysis techniques to decipher the emotions conveyed through the dialogues of various characters. By employing r packages, this analysis seeks to uncover patterns, sentiments, and thematic insights present in the play.
 
 
 # Statistical Analysis of Biodiversity: A Case Study on Shale Gas Extraction Sites in Britain
